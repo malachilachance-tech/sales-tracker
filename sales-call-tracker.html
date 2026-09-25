@@ -1,0 +1,2316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Call Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-card: #1a1a1a;
+            --accent: #c41e3a;
+            --accent-light: #d63354;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #2a2a2a;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --info: #3b82f6;
+        }
+
+        body {
+            font-family: 'Courier Prime', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-card);
+            border-bottom: 2px solid var(--accent);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .workspace-switcher {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 0;
+        }
+
+        .workspace-switcher:hover {
+            border-color: var(--accent);
+        }
+
+        .streak-display {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .streak-item {
+            text-align: center;
+        }
+
+        .streak-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .streak-number {
+            font-family: 'Oswald', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+            margin-top: 4px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            padding: 0 24px;
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px 20px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-button:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-button.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* Main Content */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Dashboard Styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 0;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-family: 'Oswald', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-secondary {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Goal Progress */
+        .goal-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 0;
+        }
+
+        .goal-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Form Styles */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-family: 'Oswald', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        input, select, textarea {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 13px;
+            border-radius: 0;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Toggle Group */
+        .toggle-group {
+            display: flex;
+            gap: 0;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 10px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 0;
+            margin-right: -1px;
+        }
+
+        .toggle-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .toggle-btn.active {
+            background: var(--accent);
+            color: var(--text-primary);
+            border-color: var(--accent);
+            z-index: 1;
+        }
+
+        .toggle-btn:first-child {
+            border-radius: 0;
+        }
+
+        .toggle-btn:last-child {
+            border-radius: 0;
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--accent);
+            color: var(--text-primary);
+            border: none;
+            padding: 12px 24px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 0;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent-light);
+            box-shadow: 0 0 16px rgba(196, 30, 58, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 11px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 2px solid var(--accent);
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-radius: 0;
+        }
+
+        .modal-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+            color: var(--accent);
+        }
+
+        /* Table */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+        }
+
+        th {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            padding: 12px;
+            text-align: left;
+            font-family: 'Oswald', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+        }
+
+        td {
+            border: 1px solid var(--border);
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: var(--bg-dark);
+        }
+
+        /* Highlight Cards */
+        .highlight-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .highlight-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .highlight-value {
+            font-family: 'Oswald', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .highlight-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Heatmap */
+        .heatmap {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-top: 12px;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 0;
+        }
+
+        .heatmap-cell:hover {
+            border-color: var(--text-primary);
+        }
+
+        .heatmap-cell-empty {
+            background: var(--bg-dark);
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 2000;
+        }
+
+        /* Deal Closed Banner */
+        .deal-banner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2001;
+            text-align: center;
+        }
+
+        .deal-banner.active {
+            display: block;
+        }
+
+        .deal-banner-text {
+            font-family: 'Oswald', sans-serif;
+            font-size: 96px;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 40px rgba(196, 30, 58, 0.5);
+            animation: dealBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes dealBounce {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(1); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 2px solid var(--accent);
+            color: var(--text-primary);
+            padding: 16px 24px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 13px;
+            z-index: 1999;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Star Rating */
+        .star-rating {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .star {
+            width: 24px;
+            height: 24px;
+            border: 1px solid var(--border);
+            background: var(--bg-dark);
+            cursor: pointer;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border-radius: 0;
+            transition: all 0.2s;
+        }
+
+        .star:hover, .star.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 0;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* Checkbox */
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        /* Calendar */
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .calendar-day {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 11px;
+            border-radius: 0;
+        }
+
+        .calendar-day-header {
+            font-family: 'Oswald', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            background: var(--bg-card);
+        }
+
+        .calendar-day-value {
+            font-family: 'Oswald', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 4px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 28px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close-modal:hover {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <div class="title">⚡ TRACKER</div>
+                <select class="workspace-switcher" id="workspaceSwitcher"></select>
+            </div>
+            <div class="streak-display">
+                <div class="streak-item">
+                    <div class="streak-label">Days</div>
+                    <div class="streak-number" id="dayStreak">0</div>
+                </div>
+                <div class="streak-item">
+                    <div class="streak-label">Wins</div>
+                    <div class="streak-number" id="winStreak">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-button" data-tab="pipeline">Pipeline</button>
+            <button class="tab-button" data-tab="trends">Trends</button>
+            <button class="tab-button" data-tab="recurring">Recurring</button>
+            <button class="tab-button" data-tab="leaderboard">Leaderboard</button>
+            <button class="tab-button" data-tab="settings">Settings</button>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard">
+                <button class="btn" onclick="app.openNewCallModal()" style="margin-bottom: 24px;">+ New Call</button>
+
+                <div class="stats-grid" id="dashboardStats"></div>
+
+                <div class="goal-section">
+                    <div class="goal-title">Weekly Cash Goal</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="weeklyProgressFill"></div>
+                    </div>
+                    <div class="progress-text" id="weeklyProgressText"></div>
+                </div>
+
+                <div class="goal-section">
+                    <div class="goal-title">Monthly Cash Goal</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="monthlyProgressFill"></div>
+                    </div>
+                    <div class="progress-text" id="monthlyProgressText"></div>
+                </div>
+            </div>
+
+            <!-- Pipeline Tab -->
+            <div class="tab-content" id="pipeline">
+                <div style="margin-bottom: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+                    <input type="month" id="pipelineMonth" style="flex: 1; min-width: 150px;">
+                    <input type="text" id="pipelineSearch" placeholder="Search..." style="flex: 1; min-width: 150px;">
+                    <select id="pipelineSetter" style="flex: 1; min-width: 150px;">
+                        <option value="">All Setters</option>
+                    </select>
+                    <select id="pipelineSource" style="flex: 1; min-width: 150px;">
+                        <option value="">All Sources</option>
+                    </select>
+                    <select id="pipelineOutcome" style="flex: 1; min-width: 150px;">
+                        <option value="">All Outcomes</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Won">Won</option>
+                        <option value="Lost">Lost</option>
+                        <option value="Follow Up">Follow Up</option>
+                        <option value="No Offer">No Offer</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table id="pipelineTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Date</th>
+                                <th>Source</th>
+                                <th>Setter</th>
+                                <th>Outcome</th>
+                                <th>Cash</th>
+                                <th>Revenue</th>
+                                <th>Show</th>
+                                <th>Qual</th>
+                                <th>Offer</th>
+                                <th>Hot</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pipelineBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Trends Tab -->
+            <div class="tab-content" id="trends">
+                <div style="margin-bottom: 32px;">
+                    <h3 style="font-family: 'Oswald', sans-serif; font-size: 16px; margin-bottom: 12px; color: var(--accent);">Daily Cash Collected</h3>
+                    <canvas id="cashChart" style="max-height: 300px;"></canvas>
+                </div>
+
+                <div class="highlight-row" id="trendsHighlights"></div>
+
+                <div style="margin-bottom: 32px;">
+                    <h3 style="font-family: 'Oswald', sans-serif; font-size: 16px; margin-bottom: 12px; color: var(--accent);">Top Setters (Last 30 Days)</h3>
+                    <div class="table-wrapper">
+                        <table id="topSettersTable">
+                            <thead>
+                                <tr>
+                                    <th>Setter</th>
+                                    <th>Bookings</th>
+                                    <th>Shows</th>
+                                    <th>Show %</th>
+                                    <th>Qualified</th>
+                                    <th>Won</th>
+                                    <th>Close %</th>
+                                    <th>Cash</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topSettersBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 32px;">
+                    <h3 style="font-family: 'Oswald', sans-serif; font-size: 16px; margin-bottom: 12px; color: var(--accent);">12-Week Cash Heatmap</h3>
+                    <div class="heatmap" id="cashHeatmap"></div>
+                </div>
+
+                <div style="margin-bottom: 32px;">
+                    <h3 style="font-family: 'Oswald', sans-serif; font-size: 16px; margin-bottom: 12px; color: var(--accent);">Monthly Calendar</h3>
+                    <div class="calendar" id="calendarView"></div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+                    <div>
+                        <h3 style="font-family: 'Oswald', sans-serif; font-size: 16px; margin-bottom: 12px; color: var(--accent);">Buyer Type Mix</h3>
+                        <canvas id="buyerTypeChart" style="max-height: 250px;"></canvas>
+                    </div>
+                    <div>
+                        <h3 style="font-family: 'Oswald', sans-serif; font-size: 16px; margin-bottom: 12px; color: var(--accent);">Top Objections</h3>
+                        <div id="topObjections" style="font-size: 13px; line-height: 2;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recurring Revenue Tab -->
+            <div class="tab-content" id="recurring">
+                <div class="table-wrapper">
+                    <table id="recurringTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Started</th>
+                                <th>Total Revenue</th>
+                                <th>Collected</th>
+                                <th>Outstanding</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recurringBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Leaderboard Tab -->
+            <div class="tab-content" id="leaderboard">
+                <div style="margin-bottom: 20px;">
+                    <label class="form-label">Filter by Month</label>
+                    <input type="month" id="leaderboardMonth" style="width: 100%; max-width: 200px;">
+                </div>
+                <div class="table-wrapper">
+                    <table id="leaderboardTable">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Setter</th>
+                                <th>Bookings</th>
+                                <th>Shows</th>
+                                <th>Show %</th>
+                                <th>Qualified</th>
+                                <th>Won</th>
+                                <th>Close %</th>
+                                <th>Close % (Q)</th>
+                                <th>Cash</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settings">
+                <div style="display: grid; gap: 32px; max-width: 600px;">
+                    <!-- Setters Management -->
+                    <div>
+                        <h3 style="font-family: 'Oswald', sans-serif; font-size: 16px; margin-bottom: 16px; color: var(--accent);">Manage Setters</h3>
+                        <div id="settersList" style="margin-bottom: 16px;"></div>
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <input type="text" id="newSetterName" placeholder="New setter name...">
+                        </div>
+                        <button class="btn" onclick="app.addSetter()">Add Setter</button>
+                    </div>
+
+                    <!-- Sources Management -->
+                    <div>
+                        <h3 style="font-family: 'Oswald', sans-serif; font-size: 16px; margin-bottom: 16px; color: var(--accent);">Lead Sources</h3>
+                        <div id="sourcesList" style="margin-bottom: 16px;"></div>
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <input type="text" id="newSourceName" placeholder="New source name...">
+                        </div>
+                        <button class="btn" onclick="app.addSource()">Add Source</button>
+                    </div>
+
+                    <!-- Cash Goals -->
+                    <div>
+                        <h3 style="font-family: 'Oswald', sans-serif; font-size: 16px; margin-bottom: 16px; color: var(--accent);">Cash Goals</h3>
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label class="form-label">Weekly Goal ($)</label>
+                            <input type="number" id="weeklyGoal" min="0">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label class="form-label">Monthly Goal ($)</label>
+                            <input type="number" id="monthlyGoal" min="0">
+                        </div>
+                        <button class="btn" onclick="app.saveGoals()">Save Goals</button>
+                    </div>
+
+                    <!-- Export/Import -->
+                    <div>
+                        <h3 style="font-family: 'Oswald', sans-serif; font-size: 16px; margin-bottom: 16px; color: var(--accent);">Data</h3>
+                        <button class="btn btn-secondary" style="width: 100%; margin-bottom: 12px;" onclick="app.exportData()">Export as JSON</button>
+                        <button class="btn btn-secondary" style="width: 100%;" onclick="app.importData()">Import JSON</button>
+                    </div>
+
+                    <!-- Danger Zone -->
+                    <div>
+                        <h3 style="font-family: 'Oswald', sans-serif; font-size: 16px; margin-bottom: 16px; color: var(--danger);">Danger Zone</h3>
+                        <button class="btn btn-danger" onclick="app.resetAllData()" style="width: 100%;">Reset All Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Call Modal -->
+    <div class="modal" id="newCallModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="app.closeNewCallModal()">✕</button>
+            <div class="modal-title">New Call</div>
+
+            <form id="newCallForm" style="max-height: 60vh; overflow-y: auto;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Name *</label>
+                        <input type="text" id="callName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="callEmail">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date *</label>
+                        <input type="date" id="callDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Source</label>
+                        <select id="callSource"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Setter</label>
+                        <select id="callSetter"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Outcome</label>
+                        <select id="callOutcome">
+                            <option value="Pending">Pending</option>
+                            <option value="Won">Won</option>
+                            <option value="Lost">Lost</option>
+                            <option value="Follow Up">Follow Up</option>
+                            <option value="No Offer">No Offer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cash Collected ($)</label>
+                        <input type="number" id="callCash" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Revenue ($)</label>
+                        <input type="number" id="callRevenue" min="0" step="0.01">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Showed / No Show</label>
+                    <div class="toggle-group">
+                        <button type="button" class="toggle-btn active" data-toggle="showed">Showed</button>
+                        <button type="button" class="toggle-btn" data-toggle="noshow">No Show</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Qualified / DQ</label>
+                    <div class="toggle-group">
+                        <button type="button" class="toggle-btn active" data-toggle="qualified">Qualified</button>
+                        <button type="button" class="toggle-btn" data-toggle="dq">DQ</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Offered / No Offer</label>
+                    <div class="toggle-group">
+                        <button type="button" class="toggle-btn active" data-toggle="offered">Offered</button>
+                        <button type="button" class="toggle-btn" data-toggle="nooffer">No Offer</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="callHotLead"> Hot Lead
+                    </label>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Payment Type</label>
+                    <div class="toggle-group">
+                        <button type="button" class="toggle-btn active" data-payment="pif">PIF</button>
+                        <button type="button" class="toggle-btn" data-payment="plan">Payment Plan</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Buyer Type</label>
+                    <select id="callBuyerType">
+                        <option value="">None</option>
+                        <option value="Practical">Practical</option>
+                        <option value="Action">Action</option>
+                        <option value="Social">Social</option>
+                        <option value="Emotional">Emotional</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Objections</label>
+                    <textarea id="callObjection" placeholder="Enter any objections..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Call Recording Link</label>
+                    <input type="url" id="callRecording" placeholder="https://...">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Before Call Prep</label>
+                    <textarea id="callPrep" placeholder="What you prepared..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">After Call Notes</label>
+                    <textarea id="callNotes" placeholder="How it went..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Call Rating</label>
+                    <div class="star-rating" id="callRating"></div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label">Call Summary</label>
+                    <textarea id="callSummary" placeholder="Overall summary..."></textarea>
+                </div>
+
+                <button type="submit" class="btn" style="width: 100%;">Save Call</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Call Modal -->
+    <div class="modal" id="editCallModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="app.closeEditCallModal()">✕</button>
+            <div class="modal-title">Edit Call</div>
+
+            <form id="editCallForm" style="max-height: 60vh; overflow-y: auto;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Name *</label>
+                        <input type="text" id="editCallName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="editCallEmail">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date *</label>
+                        <input type="date" id="editCallDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Source</label>
+                        <select id="editCallSource"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Setter</label>
+                        <select id="editCallSetter"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Outcome</label>
+                        <select id="editCallOutcome">
+                            <option value="Pending">Pending</option>
+                            <option value="Won">Won</option>
+                            <option value="Lost">Lost</option>
+                            <option value="Follow Up">Follow Up</option>
+                            <option value="No Offer">No Offer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cash Collected ($)</label>
+                        <input type="number" id="editCallCash" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Revenue ($)</label>
+                        <input type="number" id="editCallRevenue" min="0" step="0.01">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Showed / No Show</label>
+                    <div class="toggle-group">
+                        <button type="button" class="toggle-btn" data-toggle="showed">Showed</button>
+                        <button type="button" class="toggle-btn" data-toggle="noshow">No Show</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Qualified / DQ</label>
+                    <div class="toggle-group">
+                        <button type="button" class="toggle-btn" data-toggle="qualified">Qualified</button>
+                        <button type="button" class="toggle-btn" data-toggle="dq">DQ</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Offered / No Offer</label>
+                    <div class="toggle-group">
+                        <button type="button" class="toggle-btn" data-toggle="offered">Offered</button>
+                        <button type="button" class="toggle-btn" data-toggle="nooffer">No Offer</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="editCallHotLead"> Hot Lead
+                    </label>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Payment Type</label>
+                    <div class="toggle-group">
+                        <button type="button" class="toggle-btn" data-payment="pif">PIF</button>
+                        <button type="button" class="toggle-btn" data-payment="plan">Payment Plan</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Buyer Type</label>
+                    <select id="editCallBuyerType">
+                        <option value="">None</option>
+                        <option value="Practical">Practical</option>
+                        <option value="Action">Action</option>
+                        <option value="Social">Social</option>
+                        <option value="Emotional">Emotional</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Objections</label>
+                    <textarea id="editCallObjection" placeholder="Enter any objections..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Call Recording Link</label>
+                    <input type="url" id="editCallRecording" placeholder="https://...">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Before Call Prep</label>
+                    <textarea id="editCallPrep" placeholder="What you prepared..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">After Call Notes</label>
+                    <textarea id="editCallNotes" placeholder="How it went..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Call Rating</label>
+                    <div class="star-rating" id="editCallRating"></div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label">Call Summary</label>
+                    <textarea id="editCallSummary" placeholder="Overall summary..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button type="submit" class="btn" style="flex: 1;">Save Changes</button>
+                    <button type="button" class="btn btn-danger" style="flex: 1;" onclick="app.deleteCurrentCall()">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="deal-banner" id="dealBanner">
+        <div class="deal-banner-text" id="dealBannerText"></div>
+    </div>
+
+    <script>
+        // App State
+        const app = {
+            workspaces: {},
+            currentWorkspace: 'Default',
+            currentEditCallId: null,
+            chartInstance: null,
+            buyerTypeChartInstance: null,
+
+            // Initialize
+            init() {
+                this.loadData();
+                this.setupUI();
+                this.render();
+                window.addEventListener('beforeunload', () => this.saveData());
+            },
+
+            // Data Management
+            loadData() {
+                const saved = localStorage.getItem('salesTrackerData');
+                if (saved) {
+                    this.workspaces = JSON.parse(saved);
+                } else {
+                    this.workspaces = {
+                        'Default': {
+                            calls: [],
+                            setters: ['Setter 1', 'Setter 2'],
+                            sources: ['Direct', 'Referral', 'Organic'],
+                            weeklyGoal: 5000,
+                            monthlyGoal: 20000
+                        }
+                    };
+                }
+                if (!this.workspaces[this.currentWorkspace]) {
+                    this.currentWorkspace = Object.keys(this.workspaces)[0] || 'Default';
+                }
+            },
+
+            saveData() {
+                localStorage.setItem('salesTrackerData', JSON.stringify(this.workspaces));
+            },
+
+            // UI Setup
+            setupUI() {
+                this.updateWorkspaceSwitcher();
+                this.setupTabListeners();
+                this.setupToggleButtons();
+                this.setupStarRating();
+                this.setDefaultDate();
+            },
+
+            updateWorkspaceSwitcher() {
+                const switcher = document.getElementById('workspaceSwitcher');
+                switcher.innerHTML = Object.keys(this.workspaces).map(ws =>
+                    `<option value="${ws}">${ws}</option>`
+                ).join('');
+                switcher.value = this.currentWorkspace;
+                switcher.addEventListener('change', (e) => {
+                    if (e.target.value !== 'CREATE_NEW') {
+                        this.currentWorkspace = e.target.value;
+                        this.render();
+                    }
+                });
+
+                const createOpt = document.createElement('option');
+                createOpt.value = 'CREATE_NEW';
+                createOpt.textContent = '+ New Workspace';
+                switcher.appendChild(createOpt);
+
+                switcher.addEventListener('change', (e) => {
+                    if (e.target.value === 'CREATE_NEW') {
+                        const name = prompt('Workspace name:');
+                        if (name && !this.workspaces[name]) {
+                            this.workspaces[name] = {
+                                calls: [],
+                                setters: ['Setter 1'],
+                                sources: ['Direct'],
+                                weeklyGoal: 5000,
+                                monthlyGoal: 20000
+                            };
+                            this.currentWorkspace = name;
+                            this.saveData();
+                            this.updateWorkspaceSwitcher();
+                            this.render();
+                        }
+                        switcher.value = this.currentWorkspace;
+                    }
+                });
+            },
+
+            setupTabListeners() {
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        e.target.classList.add('active');
+                        document.getElementById(e.target.dataset.tab).classList.add('active');
+                    });
+                });
+            },
+
+            setupToggleButtons() {
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('.toggle-btn')) {
+                        const btn = e.target;
+                        const group = btn.closest('.toggle-group');
+                        if (group) {
+                            group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                        }
+                    }
+                });
+            },
+
+            setupStarRating() {
+                const setupStars = (containerId) => {
+                    const container = document.getElementById(containerId);
+                    if (container) {
+                        container.innerHTML = Array.from({length: 5}, (_, i) =>
+                            `<div class="star" data-value="${i + 1}">${i + 1}</div>`
+                        ).join('');
+                    }
+                };
+                setupStars('callRating');
+                setupStars('editCallRating');
+            },
+
+            setDefaultDate() {
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+                const dateInputs = document.querySelectorAll('input[type="date"]');
+                dateInputs.forEach(input => {
+                    if (!input.value) input.value = dateStr;
+                });
+            },
+
+            // Render Methods
+            render() {
+                this.renderDashboard();
+                this.renderPipeline();
+                this.renderTrends();
+                this.renderRecurring();
+                this.renderLeaderboard();
+                this.renderSettings();
+                this.updateStreaks();
+                this.updateSelectors();
+            },
+
+            renderDashboard() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const stats = this.calculateStats(ws.calls);
+
+                const html = `
+                    <div class="stat-card">
+                        <div class="stat-label">Bookings</div>
+                        <div class="stat-value">${stats.bookings}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Show Rate</div>
+                        <div class="stat-value">${stats.showRate}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Close Rate</div>
+                        <div class="stat-value">${stats.closeRate}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Close Rate (Q)</div>
+                        <div class="stat-value">${stats.closeRateQualified}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Cash Collected</div>
+                        <div class="stat-value">$${stats.cashCollected.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Cash per Call</div>
+                        <div class="stat-value">$${stats.cashPerCall}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Revenue</div>
+                        <div class="stat-value">$${stats.revenue.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Deal</div>
+                        <div class="stat-value">$${stats.avgDeal}</div>
+                        <div class="stat-secondary">${stats.dealCount} deals</div>
+                    </div>
+                `;
+
+                document.getElementById('dashboardStats').innerHTML = html;
+
+                // Update goals
+                const weeklyProgress = (stats.cashThisWeek / ws.weeklyGoal) * 100;
+                const monthlyProgress = (stats.cashThisMonth / ws.monthlyGoal) * 100;
+
+                document.getElementById('weeklyProgressFill').style.width = Math.min(weeklyProgress, 100) + '%';
+                document.getElementById('monthlyProgressFill').style.width = Math.min(monthlyProgress, 100) + '%';
+
+                const weeklyRemaining = Math.max(0, ws.weeklyGoal - stats.cashThisWeek);
+                const weeklyCallsNeeded = stats.lifetimeCashPerCall > 0 ? Math.ceil(weeklyRemaining / stats.lifetimeCashPerCall) : 0;
+
+                const monthlyRemaining = Math.max(0, ws.monthlyGoal - stats.cashThisMonth);
+                const monthlyCallsNeeded = stats.lifetimeCashPerCall > 0 ? Math.ceil(monthlyRemaining / stats.lifetimeCashPerCall) : 0;
+
+                document.getElementById('weeklyProgressText').textContent =
+                    `$${stats.cashThisWeek.toLocaleString()} / $${ws.weeklyGoal.toLocaleString()} (${weeklyCallsNeeded} calls needed)`;
+                document.getElementById('monthlyProgressText').textContent =
+                    `$${stats.cashThisMonth.toLocaleString()} / $${ws.monthlyGoal.toLocaleString()} (${monthlyCallsNeeded} calls needed)`;
+            },
+
+            calculateStats(calls) {
+                const now = new Date();
+                const today = this.getLocalDate(now);
+                const weekAgo = new Date(now);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                const monthAgo = new Date(now);
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+                const bookings = calls.length;
+                const showed = calls.filter(c => c.showed).length;
+                const qualified = calls.filter(c => c.qualified).length;
+                const won = calls.filter(c => c.outcome === 'Won').length;
+                const cashCollected = calls.reduce((sum, c) => sum + (c.cash || 0), 0);
+                const revenue = calls.reduce((sum, c) => sum + (c.revenue || 0), 0);
+
+                const showRate = bookings > 0 ? Math.round((showed / bookings) * 100) : 0;
+                const closeRate = bookings > 0 ? Math.round((won / bookings) * 100) : 0;
+                const closeRateQualified = qualified > 0 ? Math.round((won / qualified) * 100) : 0;
+                const cashPerCall = bookings > 0 ? Math.round(cashCollected / bookings) : 0;
+                const avgDeal = won > 0 ? Math.round(revenue / won) : 0;
+
+                const cashThisWeek = calls
+                    .filter(c => new Date(c.date) >= weekAgo)
+                    .reduce((sum, c) => sum + (c.cash || 0), 0);
+
+                const cashThisMonth = calls
+                    .filter(c => new Date(c.date) >= monthAgo)
+                    .reduce((sum, c) => sum + (c.cash || 0), 0);
+
+                const lifetimeCashPerCall = bookings > 0 ? cashCollected / bookings : 0;
+
+                return {
+                    bookings,
+                    showRate,
+                    closeRate,
+                    closeRateQualified,
+                    cashCollected,
+                    cashPerCall,
+                    revenue,
+                    avgDeal,
+                    dealCount: won,
+                    cashThisWeek,
+                    cashThisMonth,
+                    lifetimeCashPerCall
+                };
+            },
+
+            renderPipeline() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const monthVal = document.getElementById('pipelineMonth')?.value;
+                const search = document.getElementById('pipelineSearch')?.value?.toLowerCase() || '';
+                const setter = document.getElementById('pipelineSetter')?.value || '';
+                const source = document.getElementById('pipelineSource')?.value || '';
+                const outcome = document.getElementById('pipelineOutcome')?.value || '';
+
+                let filtered = ws.calls;
+
+                if (monthVal) {
+                    filtered = filtered.filter(c => {
+                        const [year, month] = monthVal.split('-');
+                        const date = new Date(c.date);
+                        return date.getFullYear() == year && (date.getMonth() + 1) == month;
+                    });
+                }
+
+                if (search) {
+                    filtered = filtered.filter(c =>
+                        c.name.toLowerCase().includes(search) ||
+                        c.email.toLowerCase().includes(search)
+                    );
+                }
+
+                if (setter) filtered = filtered.filter(c => c.setter === setter);
+                if (source) filtered = filtered.filter(c => c.source === source);
+                if (outcome) filtered = filtered.filter(c => c.outcome === outcome);
+
+                const tbody = document.getElementById('pipelineBody');
+                tbody.innerHTML = filtered.map(call => `
+                    <tr onclick="app.editCall('${call.id}')">
+                        <td>${call.name}</td>
+                        <td>${call.email || '-'}</td>
+                        <td>${call.date}</td>
+                        <td>${call.source || '-'}</td>
+                        <td>${call.setter || '-'}</td>
+                        <td>${call.outcome}</td>
+                        <td>$${(call.cash || 0).toLocaleString()}</td>
+                        <td>$${(call.revenue || 0).toLocaleString()}</td>
+                        <td>${call.showed ? '✓' : '✗'}</td>
+                        <td>${call.qualified ? '✓' : '✗'}</td>
+                        <td>${call.offered ? '✓' : '✗'}</td>
+                        <td>${call.hotLead ? '🔥' : ''}</td>
+                        <td>
+                            <button class="btn btn-small btn-secondary" onclick="event.stopPropagation(); app.editCall('${call.id}')">Edit</button>
+                        </td>
+                    </tr>
+                `).join('');
+            },
+
+            renderTrends() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const dailyCash = this.getDailyCashData(ws.calls);
+                this.renderCashChart(dailyCash);
+                this.renderTopSetters();
+                this.renderCashHeatmap();
+                this.renderMonthlyCalendar();
+                this.renderBuyerTypeChart();
+                this.renderTopObjections();
+                this.renderTrendsHighlights();
+            },
+
+            getDailyCashData(calls) {
+                const data = {};
+                calls.forEach(call => {
+                    const date = call.date;
+                    if (!data[date]) data[date] = 0;
+                    data[date] += call.cash || 0;
+                });
+                return data;
+            },
+
+            renderCashChart(dailyCash) {
+                const last30days = [];
+                const today = new Date();
+                for (let i = 29; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    last30days.push({
+                        date: dateStr,
+                        cash: dailyCash[dateStr] || 0
+                    });
+                }
+
+                const rollingAvg = last30days.map((day, idx) => {
+                    const start = Math.max(0, idx - 6);
+                    const avg = last30days.slice(start, idx + 1)
+                        .reduce((sum, d) => sum + d.cash, 0) / (idx - start + 1);
+                    return avg;
+                });
+
+                const ctx = document.getElementById('cashChart');
+                if (this.chartInstance) this.chartInstance.destroy();
+
+                this.chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: last30days.map(d => d.date.slice(5)),
+                        datasets: [
+                            {
+                                label: 'Daily Cash',
+                                data: last30days.map(d => d.cash),
+                                backgroundColor: 'rgba(196, 30, 58, 0.3)',
+                                borderColor: 'rgb(196, 30, 58)',
+                                borderWidth: 0
+                            },
+                            {
+                                label: '7-Day Average',
+                                data: rollingAvg,
+                                type: 'line',
+                                borderColor: 'rgb(196, 30, 58)',
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.4,
+                                pointRadius: 0,
+                                pointHoverRadius: 4,
+                                pointBackgroundColor: 'rgb(196, 30, 58)'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#b0b0b0',
+                                    font: { family: "'Courier Prime', monospace", size: 12 }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { color: '#b0b0b0' },
+                                grid: { color: '#2a2a2a' },
+                                border: { color: '#2a2a2a' }
+                            },
+                            x: {
+                                ticks: { color: '#b0b0b0' },
+                                grid: { color: '#2a2a2a' },
+                                border: { color: '#2a2a2a' }
+                            }
+                        }
+                    }
+                });
+            },
+
+            renderTopSetters() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const last30days = new Date();
+                last30days.setDate(last30days.getDate() - 30);
+
+                const settersStats = {};
+                ws.setters.forEach(setter => {
+                    const calls = ws.calls.filter(c => c.setter === setter && new Date(c.date) >= last30days);
+                    const bookings = calls.length;
+                    const showed = calls.filter(c => c.showed).length;
+                    const qualified = calls.filter(c => c.qualified).length;
+                    const won = calls.filter(c => c.outcome === 'Won').length;
+                    const cash = calls.reduce((sum, c) => sum + (c.cash || 0), 0);
+                    const revenue = calls.reduce((sum, c) => sum + (c.revenue || 0), 0);
+
+                    settersStats[setter] = {
+                        bookings,
+                        showed,
+                        qualified,
+                        won,
+                        cash,
+                        revenue,
+                        showRate: bookings > 0 ? Math.round((showed / bookings) * 100) : 0,
+                        closeRate: bookings > 0 ? Math.round((won / bookings) * 100) : 0
+                    };
+                });
+
+                const sorted = Object.entries(settersStats)
+                    .sort((a, b) => b[1].cash - a[1].cash)
+                    .slice(0, 10);
+
+                const tbody = document.getElementById('topSettersBody');
+                tbody.innerHTML = sorted.map(([setter, stats]) => `
+                    <tr>
+                        <td>${setter}</td>
+                        <td>${stats.bookings}</td>
+                        <td>${stats.showed}</td>
+                        <td>${stats.showRate}%</td>
+                        <td>${stats.qualified}</td>
+                        <td>${stats.won}</td>
+                        <td>${stats.closeRate}%</td>
+                        <td>$${stats.cash.toLocaleString()}</td>
+                        <td>$${stats.revenue.toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            },
+
+            renderCashHeatmap() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const dailyCash = this.getDailyCashData(ws.calls);
+                const today = new Date();
+                const weeks = 12;
+                const cells = [];
+                const maxCash = Math.max(...Object.values(dailyCash), 1);
+
+                for (let w = weeks * 7; w >= 0; w--) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - w);
+                    const dateStr = date.toISOString().split('T')[0];
+                    const cash = dailyCash[dateStr] || 0;
+                    const intensity = cash / maxCash;
+
+                    const bgColor = intensity === 0
+                        ? 'var(--bg-dark)'
+                        : `rgba(196, 30, 58, ${0.2 + intensity * 0.8})`;
+
+                    cells.push(`
+                        <div class="heatmap-cell ${cash === 0 ? 'heatmap-cell-empty' : ''}"
+                             style="background: ${bgColor}"
+                             title="${dateStr}: $${cash}">
+                            ${cash > 0 ? '$' + Math.round(cash / 100) : ''}
+                        </div>
+                    `);
+                }
+
+                document.getElementById('cashHeatmap').innerHTML = cells.join('');
+            },
+
+            renderMonthlyCalendar() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const dailyCash = this.getDailyCashData(ws.calls);
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth();
+
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startingDayOfWeek = firstDay.getDay();
+
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                let html = days.map(d => `<div class="calendar-day calendar-day-header">${d}</div>`).join('');
+
+                for (let i = 0; i < startingDayOfWeek; i++) {
+                    html += '<div class="calendar-day"></div>';
+                }
+
+                const maxCash = Math.max(...Object.values(dailyCash), 1);
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    const dateStr = date.toISOString().split('T')[0];
+                    const cash = dailyCash[dateStr] || 0;
+                    const intensity = cash / maxCash;
+                    const bgColor = cash === 0
+                        ? 'var(--bg-dark)'
+                        : `rgba(196, 30, 58, ${0.2 + intensity * 0.8})`;
+
+                    html += `
+                        <div class="calendar-day" style="background: ${bgColor}">
+                            <div>${day}</div>
+                            ${cash > 0 ? `<div class="calendar-day-value">$${Math.round(cash)}</div>` : ''}
+                        </div>
+                    `;
+                }
+
+                document.getElementById('calendarView').innerHTML = html;
+            },
+
+            renderBuyerTypeChart() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const types = {};
+
+                ws.calls.forEach(call => {
+                    const type = call.buyerType || 'None';
+                    if (!types[type]) types[type] = 0;
+                    types[type]++;
+                });
+
+                const ctx = document.getElementById('buyerTypeChart');
+                if (this.buyerTypeChartInstance) this.buyerTypeChartInstance.destroy();
+
+                this.buyerTypeChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(types),
+                        datasets: [{
+                            data: Object.values(types),
+                            backgroundColor: ['#c41e3a', '#d63354', '#ef4444', '#f87171']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#b0b0b0',
+                                    font: { family: "'Courier Prime', monospace", size: 12 }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
+            renderTopObjections() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const objections = {};
+
+                ws.calls.forEach(call => {
+                    if (call.objection) {
+                        const lines = call.objection.split('\n');
+                        lines.forEach(line => {
+                            const trimmed = line.trim();
+                            if (trimmed) {
+                                objections[trimmed] = (objections[trimmed] || 0) + 1;
+                            }
+                        });
+                    }
+                });
+
+                const sorted = Object.entries(objections)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10);
+
+                const html = sorted.map(([obj, count]) =>
+                    `<div><strong>${count}x</strong> ${obj}</div>`
+                ).join('');
+
+                document.getElementById('topObjections').innerHTML = html || '<div>No objections recorded</div>';
+            },
+
+            renderTrendsHighlights() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const stats = this.calculateStats(ws.calls);
+
+                const html = `
+                    <div class="highlight-card">
+                        <div class="highlight-value">$${stats.cashCollected.toLocaleString()}</div>
+                        <div class="highlight-label">Total Cash</div>
+                    </div>
+                    <div class="highlight-card">
+                        <div class="highlight-value">$${stats.revenue.toLocaleString()}</div>
+                        <div class="highlight-label">Total Revenue</div>
+                    </div>
+                    <div class="highlight-card">
+                        <div class="highlight-value">${stats.closeRate}%</div>
+                        <div class="highlight-label">Close Rate</div>
+                    </div>
+                `;
+
+                document.getElementById('trendsHighlights').innerHTML = html;
+            },
+
+            renderRecurring() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const tbody = document.getElementById('recurringBody');
+
+                const plans = ws.calls.filter(c => c.revenue > c.cash).map(call => ({
+                    callId: call.id,
+                    name: call.name,
+                    email: call.email,
+                    date: call.date,
+                    revenue: call.revenue,
+                    cash: call.cash,
+                    status: 'active'
+                }));
+
+                tbody.innerHTML = plans.map(plan => {
+                    const outstanding = plan.revenue - plan.cash;
+                    return `
+                        <tr>
+                            <td>${plan.name}</td>
+                            <td>${plan.email || '-'}</td>
+                            <td>${plan.date}</td>
+                            <td>$${plan.revenue.toLocaleString()}</td>
+                            <td>$${plan.cash.toLocaleString()}</td>
+                            <td>$${outstanding.toLocaleString()}</td>
+                            <td>${plan.status}</td>
+                            <td>
+                                <button class="btn btn-small btn-secondary" onclick="app.markPlanPaid('${plan.callId}')">Mark Paid</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+
+            renderLeaderboard() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const monthVal = document.getElementById('leaderboardMonth')?.value;
+
+                let filteredCalls = ws.calls;
+                if (monthVal) {
+                    const [year, month] = monthVal.split('-');
+                    filteredCalls = filteredCalls.filter(c => {
+                        const date = new Date(c.date);
+                        return date.getFullYear() == year && (date.getMonth() + 1) == month;
+                    });
+                }
+
+                const settersStats = {};
+                ws.setters.forEach(setter => {
+                    const calls = filteredCalls.filter(c => c.setter === setter);
+                    const bookings = calls.length;
+                    const showed = calls.filter(c => c.showed).length;
+                    const qualified = calls.filter(c => c.qualified).length;
+                    const won = calls.filter(c => c.outcome === 'Won').length;
+                    const cash = calls.reduce((sum, c) => sum + (c.cash || 0), 0);
+                    const revenue = calls.reduce((sum, c) => sum + (c.revenue || 0), 0);
+
+                    settersStats[setter] = {
+                        bookings,
+                        showed,
+                        qualified,
+                        won,
+                        cash,
+                        revenue,
+                        showRate: bookings > 0 ? Math.round((showed / bookings) * 100) : 0,
+                        closeRate: bookings > 0 ? Math.round((won / bookings) * 100) : 0,
+                        closeRateQualified: qualified > 0 ? Math.round((won / qualified) * 100) : 0
+                    };
+                });
+
+                const sorted = Object.entries(settersStats)
+                    .sort((a, b) => b[1].cash - a[1].cash);
+
+                const tbody = document.getElementById('leaderboardBody');
+                tbody.innerHTML = sorted.map(([setter, stats], idx) => `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>${setter}</td>
+                        <td>${stats.bookings}</td>
+                        <td>${stats.showed}</td>
+                        <td>${stats.showRate}%</td>
+                        <td>${stats.qualified}</td>
+                        <td>${stats.won}</td>
+                        <td>${stats.closeRate}%</td>
+                        <td>${stats.closeRateQualified}%</td>
+                        <td>$${stats.cash.toLocaleString()}</td>
+                        <td>$${stats.revenue.toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            },
+
+            renderSettings() {
+                const ws = this.workspaces[this.currentWorkspace];
+
+                const settersHtml = ws.setters.map(setter => `
+                    <div style="display: flex; gap: 12px; margin-bottom: 8px; align-items: center;">
+                        <span>${setter}</span>
+                        <button class="btn btn-small btn-danger" onclick="app.deleteSetter('${setter}')">Delete</button>
+                    </div>
+                `).join('');
+                document.getElementById('settersList').innerHTML = settersHtml;
+
+                const sourcesHtml = ws.sources.map(source => `
+                    <div style="display: flex; gap: 12px; margin-bottom: 8px; align-items: center;">
+                        <span>${source}</span>
+                        <button class="btn btn-small btn-danger" onclick="app.deleteSource('${source}')">Delete</button>
+                    </div>
+                `).join('');
+                document.getElementById('sourcesList').innerHTML = sourcesHtml;
+
+                document.getElementById('weeklyGoal').value = ws.weeklyGoal;
+                document.getElementById('monthlyGoal').value = ws.monthlyGoal;
+            },
+
+            updateSelectors() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const setterSelects = document.querySelectorAll('select[id*="Setter"]');
+                const sourceSelects = document.querySelectorAll('select[id*="Source"]');
+
+                setterSelects.forEach(select => {
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="">None</option>' +
+                        ws.setters.map(s => `<option value="${s}">${s}</option>`).join('');
+                    select.value = currentValue;
+                });
+
+                sourceSelects.forEach(select => {
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="">None</option>' +
+                        ws.sources.map(s => `<option value="${s}">${s}</option>`).join('');
+                    select.value = currentValue;
+                });
+            },
+
+            updateStreaks() {
+                const ws = this.workspaces[this.currentWorkspace];
+
+                let dayStreak = 0;
+                for (let i = 0; i < 365; i++) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    const dateStr = this.getLocalDate(date);
+                    if (ws.calls.some(c => c.date === dateStr)) {
+                        dayStreak++;
+                    } else {
+                        break;
+                    }
+                }
+
+                let winStreak = 0;
+                for (let call of ws.calls.sort((a, b) => new Date(b.date) - new Date(a.date))) {
+                    if (call.outcome === 'Won') {
+                        winStreak++;
+                    } else {
+                        break;
+                    }
+                }
+
+                document.getElementById('dayStreak').textContent = dayStreak;
+                document.getElementById('winStreak').textContent = winStreak;
+            },
+
+            // Modal Methods
+            openNewCallModal() {
+                document.getElementById('newCallForm').reset();
+                document.getElementById('newCallModal').classList.add('active');
+                this.setDefaultDate();
+
+                document.querySelectorAll('#newCallModal .toggle-btn').forEach((btn, idx) => {
+                    btn.classList.remove('active');
+                    if (idx === 0 || btn.getAttribute('data-toggle') === 'pif' ||
+                        btn.getAttribute('data-toggle') === 'showed' ||
+                        btn.getAttribute('data-toggle') === 'qualified' ||
+                        btn.getAttribute('data-toggle') === 'offered') {
+                        btn.classList.add('active');
+                    }
+                });
+            },
+
+            closeNewCallModal() {
+                document.getElementById('newCallModal').classList.remove('active');
+            },
+
+            closeEditCallModal() {
+                document.getElementById('editCallModal').classList.remove('active');
+                this.currentEditCallId = null;
+            },
+
+            // Call Management
+            editCall(id) {
+                const ws = this.workspaces[this.currentWorkspace];
+                const call = ws.calls.find(c => c.id === id);
+                if (!call) return;
+
+                this.currentEditCallId = id;
+                this.populateEditForm(call);
+                document.getElementById('editCallModal').classList.add('active');
+            },
+
+            populateEditForm(call) {
+                document.getElementById('editCallName').value = call.name;
+                document.getElementById('editCallEmail').value = call.email || '';
+                document.getElementById('editCallDate').value = call.date;
+                document.getElementById('editCallSource').value = call.source || '';
+                document.getElementById('editCallSetter').value = call.setter || '';
+                document.getElementById('editCallOutcome').value = call.outcome;
+                document.getElementById('editCallCash').value = call.cash || '';
+                document.getElementById('editCallRevenue').value = call.revenue || '';
+                document.getElementById('editCallObjection').value = call.objection || '';
+                document.getElementById('editCallRecording').value = call.recording || '';
+                document.getElementById('editCallPrep').value = call.prep || '';
+                document.getElementById('editCallNotes').value = call.notes || '';
+                document.getElementById('editCallSummary').value = call.summary || '';
+                document.getElementById('editCallBuyerType').value = call.buyerType || '';
+                document.getElementById('editCallHotLead').checked = call.hotLead || false;
+
+                this.setToggleState('editCallModal', 'showed', call.showed);
+                this.setToggleState('editCallModal', 'qualified', call.qualified);
+                this.setToggleState('editCallModal', 'offered', call.offered);
+                this.setToggleState('editCallModal', call.paymentType === 'plan' ? 'plan' : 'pif', true);
+
+                if (call.rating) {
+                    const stars = document.querySelectorAll('#editCallRating .star');
+                    stars.forEach((star, idx) => {
+                        if (idx < call.rating) star.classList.add('active');
+                        else star.classList.remove('active');
+                    });
+                }
+            },
+
+            setToggleState(modalId, dataValue, state) {
+                const modal = document.getElementById(modalId);
+                const buttons = modal.querySelectorAll(`.toggle-btn[data-toggle="${dataValue}"], .toggle-btn[data-payment="${dataValue}"]`);
+                buttons.forEach(btn => {
+                    if (state) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                });
+            },
+
+            deleteCurrentCall() {
+                if (!this.currentEditCallId) return;
+                const ws = this.workspaces[this.currentWorkspace];
+                ws.calls = ws.calls.filter(c => c.id !== this.currentEditCallId);
+                this.saveData();
+                this.closeEditCallModal();
+                this.renderPipeline();
+                this.renderDashboard();
+                this.renderTrends();
+            },
+
+            // Form Submission
+            submitNewCall(e) {
+                e.preventDefault();
+                const form = e.target;
+                const call = this.getFormData(form, 'new');
+
+                const ws = this.workspaces[this.currentWorkspace];
+
+                ws.calls.push(call);
+                this.saveData();
+                this.closeNewCallModal();
+                this.render();
+
+                this.showToast(`New call recorded - ${call.name}`);
+                if (call.cash > 0) this.celebrateCash();
+            },
+
+            submitEditCall(e) {
+                e.preventDefault();
+                const ws = this.workspaces[this.currentWorkspace];
+                const callIndex = ws.calls.findIndex(c => c.id === this.currentEditCallId);
+                const oldOutcome = ws.calls[callIndex].outcome;
+                const oldCash = ws.calls[callIndex].cash || 0;
+
+                const updatedCall = this.getFormData(e.target, 'edit');
+                ws.calls[callIndex] = updatedCall;
+
+                this.saveData();
+                this.closeEditCallModal();
+                this.render();
+
+                if (oldOutcome !== 'Won' && updatedCall.outcome === 'Won') {
+                    this.celebrateDeal();
+                }
+
+                if (updatedCall.cash > oldCash) {
+                    this.celebrateCash();
+                }
+            },
+
+            getFormData(form, type) {
+                const prefix = type === 'edit' ? 'edit' : '';
+                const getElem = (id) => document.getElementById(prefix ? `${prefix}${id}` : id);
+
+                const showed = form.querySelector(`.toggle-btn[data-toggle="showed"]`)?.classList.contains('active') ?? true;
+                const qualified = form.querySelector(`.toggle-btn[data-toggle="qualified"]`)?.classList.contains('active') ?? true;
+                const offered = form.querySelector(`.toggle-btn[data-toggle="offered"]`)?.classList.contains('active') ?? true;
+                const paymentType = form.querySelector(`.toggle-btn[data-payment="plan"]`)?.classList.contains('active') ? 'plan' : 'pif';
+
+                const rating = form.querySelector('.star-rating .star.active');
+                const ratingValue = rating ? parseInt(rating.dataset.value) : 0;
+
+                return {
+                    id: this.currentEditCallId || 'call_' + Date.now(),
+                    name: getElem('CallName').value,
+                    email: getElem('CallEmail').value,
+                    date: getElem('CallDate').value,
+                    source: getElem('CallSource').value,
+                    setter: getElem('CallSetter').value,
+                    outcome: getElem('CallOutcome').value,
+                    cash: parseFloat(getElem('CallCash').value) || 0,
+                    revenue: parseFloat(getElem('CallRevenue').value) || 0,
+                    showed,
+                    qualified,
+                    offered,
+                    hotLead: getElem('CallHotLead').checked,
+                    paymentType,
+                    buyerType: getElem('CallBuyerType').value,
+                    objection: getElem('CallObjection').value,
+                    recording: getElem('CallRecording').value,
+                    prep: getElem('CallPrep').value,
+                    notes: getElem('CallNotes').value,
+                    rating: ratingValue,
+                    summary: getElem('CallSummary').value
+                };
+            },
+
+            // Settings Methods
+            addSetter() {
+                const name = document.getElementById('newSetterName').value;
+                if (name) {
+                    const ws = this.workspaces[this.currentWorkspace];
+                    if (!ws.setters.includes(name)) {
+                        ws.setters.push(name);
+                        this.saveData();
+                        this.renderSettings();
+                        this.updateSelectors();
+                        document.getElementById('newSetterName').value = '';
+                    }
+                }
+            },
+
+            deleteSetter(name) {
+                const ws = this.workspaces[this.currentWorkspace];
+                ws.setters = ws.setters.filter(s => s !== name);
+                this.saveData();
+                this.renderSettings();
+                this.updateSelectors();
+            },
+
+            addSource() {
+                const name = document.getElementById('newSourceName').value;
+                if (name) {
+                    const ws = this.workspaces[this.currentWorkspace];
+                    if (!ws.sources.includes(name)) {
+                        ws.sources.push(name);
+                        this.saveData();
+                        this.renderSettings();
+                        this.updateSelectors();
+                        document.getElementById('newSourceName').value = '';
+                    }
+                }
+            },
+
+            deleteSource(name) {
+                const ws = this.workspaces[this.currentWorkspace];
+                ws.sources = ws.sources.filter(s => s !== name);
+                this.saveData();
+                this.renderSettings();
+                this.updateSelectors();
+            },
+
+            saveGoals() {
+                const ws = this.workspaces[this.currentWorkspace];
+                ws.weeklyGoal = parseFloat(document.getElementById('weeklyGoal').value) || 0;
+                ws.monthlyGoal = parseFloat(document.getElementById('monthlyGoal').value) || 0;
+                this.saveData();
+                this.showToast('Goals saved');
+                this.renderDashboard();
+            },
+
+            exportData() {
+                const ws = this.workspaces[this.currentWorkspace];
+                const json = JSON.stringify(ws, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sales-tracker-${this.currentWorkspace}-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            },
+
+            importData() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        try {
+                            const data = JSON.parse(evt.target.result);
+                            this.workspaces[this.currentWorkspace] = data;
+                            this.saveData();
+                            this.render();
+                            this.showToast('Data imported');
+                        } catch (err) {
+                            this.showToast('Invalid JSON file');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            },
+
+            resetAllData() {
+                if (confirm('Are you sure? This cannot be undone.')) {
+                    this.workspaces[this.currentWorkspace] = {
+                        calls: [],
+                        setters: ['Setter 1'],
+                        sources: ['Direct'],
+                        weeklyGoal: 5000,
+                        monthlyGoal: 20000
+                    };
+                    this.saveData();
+                    this.render();
+                    this.showToast('Data reset');
+                }
+            },
+
+            markPlanPaid(callId) {
+                const ws = this.workspaces[this.currentWorkspace];
+                const call = ws.calls.find(c => c.id === callId);
+                if (call) {
+                    call.cash = call.revenue;
+                    this.saveData();
+                    this.renderRecurring();
+                    this.render();
+                    this.showToast('Plan marked as paid');
+                }
+            },
+
+            // Celebration Effects
+            celebrateDeal() {
+                const banner = document.querySelector('.deal-banner');
+                const bannerText = document.querySelector('.deal-banner-text');
+                bannerText.textContent = 'DEAL CLOSED';
+                banner.classList.add('active');
+
+                this.createConfetti();
+
+                setTimeout(() => banner.classList.remove('active'), 3000);
+            },
+
+            celebrateCash() {
+                this.createConfetti();
+            },
+
+            createConfetti() {
+                for (let i = 0; i < 50; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.backgroundColor = Math.random() > 0.5 ? '#c41e3a' : '#ffffff';
+                    confetti.style.animation = `fall ${2 + Math.random() * 1}s linear forwards`;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }
+            },
+
+            showToast(message) {
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            },
+
+            // Utility
+            getLocalDate(date) {
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            }
+        };
+
+        // Form Submission
+        document.getElementById('newCallForm')?.addEventListener('submit', (e) => app.submitNewCall(e));
+        document.getElementById('editCallForm')?.addEventListener('submit', (e) => app.submitEditCall(e));
+
+        // Filters
+        document.getElementById('leaderboardMonth')?.addEventListener('change', () => app.renderLeaderboard());
+        document.getElementById('pipelineMonth')?.addEventListener('change', () => app.renderPipeline());
+        document.getElementById('pipelineSearch')?.addEventListener('input', () => app.renderPipeline());
+        document.getElementById('pipelineSetter')?.addEventListener('change', () => app.renderPipeline());
+        document.getElementById('pipelineSource')?.addEventListener('change', () => app.renderPipeline());
+        document.getElementById('pipelineOutcome')?.addEventListener('change', () => app.renderPipeline());
+
+        // Initialize
+        app.init();
+
+        // Confetti animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                to {
+                    transform: translateY(100vh) rotate(720deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
